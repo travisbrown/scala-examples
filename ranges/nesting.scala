@@ -5,64 +5,45 @@
 #
 */
 
-case class RangeNesting(label: String, children: List[RangeNesting])
-case class RangeLimits(first: Int, last: Int)
+import scalaz._, Scalaz._
 
-def pretty(nestings: List[RangeNesting], depth: Int = 0): String = {
-  def each(nesting: RangeNesting) = "%s(\n%s%s %s%s)".format(
-    " " * (depth + 1) * 2,
-    " " * (depth + 2) * 2,
-    nesting.label,
-    pretty(nesting.children, depth + 2),
-    " " * (depth + 1) * 2
-  )
-
-  "(%s%s)\n".format(
-    nestings.map(nesting => "\n" + each(nesting)).mkString(","),
-    if (nestings.isEmpty) "" else "\n" + " " * depth * 2
-  )
-}
-
-// Type aliases for our typing convenience.
-type Range = (String, RangeLimits)
-type Ranges = List[Range]
-
-def collectChildren(ranges: Ranges): List[RangeNesting] = ranges match {
-  case Nil => Nil
-  case (label, RangeLimits(_, last)) :: rest =>
-    val (inside, outside) = rest.span(_._2.first < last)
-    RangeNesting(label, collectChildren(inside)) :: collectChildren(outside)
-}
-
-def rangeNestings(rangeHash: Map[String, RangeLimits]) = collectChildren(
-  rangeHash.toList.sortBy {
-    case (_, limits) => (limits.first, -limits.last)
+object RangeNestingDemo extends App {
+  def collectChildren(
+    ranges: List[(String, (Int, Int))]
+  ): Stream[Tree[String]] = ranges match {
+    case Nil => Stream.empty
+    case (label, (_, last)) :: rest =>
+      val (inside, outside) = rest.span(_._2._1 < last)
+      Tree.node(label, collectChildren(inside)) #:: collectChildren(outside)
   }
-)
 
-// Now test this
+  def rangeNestings(rangeHash: Map[String, (Int, Int)]) = collectChildren(
+    rangeHash.toList.sortBy {
+      case (_, (first, last)) => (first, -last)
+    }
+  )
 
-val ranges = Map(
-  "Apple" -> RangeLimits(0, 10),
-  "Banana" -> RangeLimits(11, 20),
-  "appleArtichoke" -> RangeLimits(0,3),
-  "appleBanana" -> RangeLimits(4,7),
-  "appleCranberry" -> RangeLimits(8,11),
-  "appleArtichokeApricot" -> RangeLimits(0,2),
-  "appleArtichokeBBQ" -> RangeLimits(3,4),
-  "appleBananaApricot" -> RangeLimits(5,7),
-  "appleCranberryApricot" -> RangeLimits(8,9),
-  "appleArtichokeBBQ" -> RangeLimits(10,11)
-)
+  val ranges = Map(
+    "Apple" -> (0, 11),
+    "Banana" -> (11, 20),
+    "appleArtichoke" -> (0, 3),
+    "appleBanana" -> (4, 7),
+    "appleCranberry" -> (8, 11),
+    "appleArtichokeApricot" -> (0, 2),
+    "appleArtichokeBBQ" -> (3, 4),
+    "appleBananaApricot" -> (5, 7),
+    "appleCranberryApricot" -> (8, 9),
+    "appleArtichokeBBQ" -> (10, 11)
+  )
 
-println()
-println(ranges)
-println()
-println(pretty(rangeNestings(ranges)))
-println()
+  println()
+  println(ranges)
+  println()
+  rangeNestings(ranges).foreach(range => println(range.drawTree))
+  println()
+}
 
 /*
-
 This should result in the following output (reformatted and 'List' and 'RangeNesting' removed for readability):
 
 Map(
@@ -111,5 +92,5 @@ Map(
     Banana,()
   )
 )
-
 */
+
