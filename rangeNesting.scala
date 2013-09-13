@@ -62,20 +62,18 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
     case (_, limits) => (limits.first, -limits.last)
   }.map(_._1)
 
-  var nestings = Map.empty[String, List[String]]
-
   // we know that the container of a particular label comes before the label
   // we want to record *all* of the ranges that contain a particular label
-  var labelStack = List.empty[String]
 
-  sortedLabels.foreach(
-    label => {
+  val nestings = sortedLabels.foldLeft(
+    Map.empty[String, List[String]],
+    List.empty[String]
+  ) {
+    case ((nestings, stack), label) =>
       // we want to go down the labelStack until we find something that we're not in, and then truncate the list before appending ourselves
-      labelStack = truncateStack(labelStack, label)
-      labelStack = labelStack :+ label
-      nestings += (label -> labelStack)
-    }
-  )
+      val newStack = truncateStack(stack, label) :+ label
+      (nestings + (label -> newStack), newStack)
+  }._1
 
   buildRangeNestings(nestings, 1, sortedLabels)
 }
