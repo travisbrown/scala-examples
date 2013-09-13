@@ -10,13 +10,13 @@ import scalaz._, Scalaz._
 object RangeNestingDemo extends App {
   def collectChildren(
     ranges: List[(String, (Int, Int))]
-  ): String \/ Stream[Tree[String]] = ranges match {
+  ): (String, String) \/ Stream[Tree[String]] = ranges match {
     case Nil => Stream.empty.right
     case (label, (_, last)) :: rest =>
       val (inside, outside) = rest.span(_._2._1 < last)
 
       inside.find(_._2._2 > last).map {
-        case (label, _) => label.left
+        case (childLabel, _) => (label, childLabel).left
       } getOrElse {
         for {
           insideChildren  <- collectChildren(inside)
@@ -48,7 +48,11 @@ object RangeNestingDemo extends App {
   println(ranges)
   println()
   rangeNestings(ranges).fold(
-    printf("Nesting error at label %s!\n", _),
+    labels => printf(
+      "Nesting error at label %s inside %s!\n",
+      labels._2,
+      labels._1
+    ),
     _.foreach(range => println(range.drawTree))
   )
   println()
