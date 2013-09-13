@@ -8,6 +8,21 @@
 case class RangeNesting(label: String, children: List[RangeNesting])
 case class RangeLimits(first: Int, last: Int)
 
+def pretty(nestings: List[RangeNesting], depth: Int = 0): String = {
+  def each(nesting: RangeNesting) = "%s(\n%s%s %s%s)".format(
+    " " * (depth + 1) * 2,
+    " " * (depth + 2) * 2,
+    nesting.label,
+    pretty(nesting.children, depth + 2),
+    " " * (depth + 1) * 2
+  )
+
+  "(%s%s)\n".format(
+    nestings.map(nesting => "\n" + each(nesting)).mkString(","),
+    if (nestings.isEmpty) "" else "\n" + " " * (depth + 0) * 2
+  )
+}
+
 def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
   /* given a set of ranges, how are they nested?
   #
@@ -94,7 +109,7 @@ var ranges = Map(
 println()
 println(ranges)
 println()
-println(rangeNestings(ranges))
+println(pretty(rangeNestings(ranges)))
 println()
 
 /*
