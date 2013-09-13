@@ -29,7 +29,7 @@ type Ranges = List[Range]
 
 def collectChildren(ranges: Ranges): List[RangeNesting] = ranges match {
   case Nil => Nil
-  case (label, RangeLimits(first, last)) :: rest =>
+  case (label, RangeLimits(_, last)) :: rest =>
     val (inside, outside) = rest.span(_._2.first < last)
     RangeNesting(label, collectChildren(inside)) :: collectChildren(outside)
 }
