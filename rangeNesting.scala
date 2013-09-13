@@ -50,8 +50,10 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
     )
 
   def truncateStack(stack: List[String], label: String): List[String] =
-    if(stack.isEmpty || rangeHash(stack.head).last < rangeHash(label).first) Nil else {
-      stack.head :: truncateStack(stack.tail, label)
+    stack match {
+      case h :: _ if rangeHash(h).last < rangeHash(label).first => Nil
+      case h :: t => h :: truncateStack(t, label)
+      case Nil => Nil
     }
 
   // first, sort the range labels by their 'first' value and reverse by their 'last' if they have the same 'first'  
