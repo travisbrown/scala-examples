@@ -30,7 +30,7 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
   */
   def buildRangeNestings(nestings: Map[String, List[String]], pos: Int, sequence: List[String]): List[RangeNesting] =
     sequence.filter(nestings(_).length == pos).map(
-      root => {
+      root =>
         RangeNesting(
           root, 
           buildRangeNestings(
@@ -47,12 +47,11 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
             )
           )
         )
-      }
     )
 
-  def truncateStack(stack: List[String], label: String, ranges: Map[String,RangeLimits]): List[String] =
-    if(stack.isEmpty || ranges(stack.head).last < ranges(label).first) Nil else {
-      stack.head :: truncateStack(stack.tail, label, ranges)
+  def truncateStack(stack: List[String], label: String): List[String] =
+    if(stack.isEmpty || rangeHash(stack.head).last < rangeHash(label).first) Nil else {
+      stack.head :: truncateStack(stack.tail, label)
     }
 
   // first, sort the range labels by their 'first' value and reverse by their 'last' if they have the same 'first'  
@@ -70,7 +69,7 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
   sortedLabels.foreach(
     label => {
       // we want to go down the labelStack until we find something that we're not in, and then truncate the list before appending ourselves
-      labelStack = truncateStack(labelStack, label, rangeHash)
+      labelStack = truncateStack(labelStack, label)
       labelStack = labelStack :+ label
       nestings += (label -> labelStack)
     }
