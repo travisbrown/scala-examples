@@ -64,7 +64,7 @@ def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
 
   // we know that the container of a particular label comes before the label
   // we want to record *all* of the ranges that contain a particular label
-  var labelStack: List[String] = List()
+  var labelStack = List.empty[String]
 
   sortedLabels.foreach(
     label => {
