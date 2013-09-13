@@ -23,61 +23,22 @@ def pretty(nestings: List[RangeNesting], depth: Int = 0): String = {
   )
 }
 
-def rangeNestings(rangeHash: Map[String,RangeLimits]) = {
-  /* given a set of ranges, how are they nested?
-  #
-  # rangeHash['label'] = { first: ..., last: ... }
-  */
-  def buildRangeNestings(nestings: Map[String, List[String]], pos: Int, sequence: List[String]): List[RangeNesting] =
-    sequence.filter(nestings(_).length == pos).map(
-      root =>
-        RangeNesting(
-          root, 
-          buildRangeNestings(
-            nestings, 
-            pos+1, 
-            sequence.filter(
-              target => {
-                nestings(target).length > pos && (
-                  nestings(root).isEmpty ||
-                  nestings(root).length <= nestings(target).length && 
-                    (nestings(root), nestings(target)).zipped.forall(_==_)
-                )
-              }
-            )
-          )
-        )
-    )
+// Type aliases for our typing convenience.
+type Range = (String, RangeLimits)
+type Ranges = List[Range]
 
-  def truncateStack(stack: List[String], label: String): List[String] =
-    stack match {
-      case h :: _ if rangeHash(h).last < rangeHash(label).first => Nil
-      case h :: t => h :: truncateStack(t, label)
-      case Nil => Nil
-    }
-
-  // first, sort the range labels by their 'first' value and reverse by their 'last' if they have the same 'first'  
-
-  val sortedLabels = rangeHash.toList.sortBy {
-    case (_, limits) => (limits.first, -limits.last)
-  }.map(_._1)
-
-  // we know that the container of a particular label comes before the label
-  // we want to record *all* of the ranges that contain a particular label
-
-  val nestings = sortedLabels.foldLeft(
-    Map.empty[String, List[String]],
-    List.empty[String]
-  ) {
-    case ((nestings, stack), label) =>
-      // we want to go down the labelStack until we find something that we're not in, and then truncate the list before appending ourselves
-      val newStack = truncateStack(stack, label) :+ label
-      (nestings + (label -> newStack), newStack)
-  }._1
-
-  buildRangeNestings(nestings, 1, sortedLabels)
+def collectChildren(ranges: Ranges): List[RangeNesting] = ranges match {
+  case Nil => Nil
+  case (label, RangeLimits(first, last)) :: rest =>
+    val (inside, outside) = rest.span(_._2.first < last)
+    RangeNesting(label, collectChildren(inside)) :: collectChildren(outside)
 }
-  
+
+def rangeNestings(rangeHash: Map[String, RangeLimits]) = collectChildren(
+  rangeHash.toList.sortBy {
+    case (_, limits) => (limits.first, -limits.last)
+  }
+)
 
 // Now test this
 
