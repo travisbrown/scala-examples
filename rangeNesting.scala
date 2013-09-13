@@ -19,7 +19,7 @@ def pretty(nestings: List[RangeNesting], depth: Int = 0): String = {
 
   "(%s%s)\n".format(
     nestings.map(nesting => "\n" + each(nesting)).mkString(","),
-    if (nestings.isEmpty) "" else "\n" + " " * (depth + 0) * 2
+    if (nestings.isEmpty) "" else "\n" + " " * depth * 2
   )
 }
 
